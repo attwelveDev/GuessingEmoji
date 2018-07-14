@@ -62,6 +62,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     @IBOutlet var moreView: UIView!
     @IBOutlet weak var vabButton: UIButton!
     @IBOutlet weak var shareButton: UIButton!
+    @IBOutlet weak var rateButton: UIButton!
     @IBOutlet weak var siteButton: UIButton!
     @IBOutlet weak var ppButton: UIButton!
     @IBOutlet weak var maButton: UIButton!
@@ -82,6 +83,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     @IBOutlet var gameView: UIView!
     @IBOutlet weak var bombLabel: UILabel!
     @IBOutlet weak var scoreLabel: UILabel!
+//    @IBOutlet weak var highscoreLabel: UILabel!
     @IBOutlet weak var emojiLabel: UILabel!
     @IBOutlet weak var emojiImageView: UIImageView!
     @IBOutlet weak var stackView: UIStackView!
@@ -91,6 +93,8 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     @IBOutlet weak var gameOverLabel: UILabel!
     @IBOutlet weak var gameOverMessageLabel: UILabel!
     @IBOutlet weak var gameOverScoreLabel: UILabel!
+//    @IBOutlet weak var gameOverHighscoreLabel: UILabel!
+    @IBOutlet weak var shareResultButton: UIButton!
     @IBOutlet weak var againButton: UIButton!
     @IBOutlet weak var menuButton: UIButton!
     
@@ -121,15 +125,34 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     
     var scaleNumber = CGFloat()
     
-    var appErrorLoaded = String()
-    
     var isInitialLaunch = true
     var isInitalRotation = true
+    
+    var isLoadingApp = false
+    
+    var modePlayed = String()
+    
+    // TODO: to insert in next update
+//    var easyHighscore = UserDefaults.standard.integer(forKey: "easyHighscore")
+//    var mediumHighscore = UserDefaults.standard.integer(forKey: "mediumHighscore")
+//    var hardHighscore = UserDefaults.standard.integer(forKey: "hardHighscore")
+//
+//    let defaults = UserDefaults.standard
     
     // MARK: Override functions
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+//        if defaults.object(forKey: "easyHighscore") == nil {
+//            defaults.set(0, forKey: "easyHighscore")
+//        }
+//        if defaults.object(forKey: "mediumHighscore") == nil {
+//            defaults.set(0, forKey: "mediumHighscore")
+//        }
+//        if defaults.object(forKey: "hardHighscore") == nil {
+//            defaults.set(0, forKey: "hardHighscore")
+//        }
         
         roundCornersOf(easyButton, radius: easyButton.frame.height / 2, shadows: true)
         roundCornersOf(mediumButton, radius: mediumButton.frame.height / 2, shadows: true)
@@ -139,6 +162,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         
         roundCornersOf(vabButton, radius: vabButton.frame.height / 2, shadows: false)
         roundCornersOf(shareButton, radius: shareButton.frame.height / 2, shadows: false)
+        roundCornersOf(rateButton, radius: shareButton.frame.height / 2, shadows: false)
         roundCornersOf(siteButton, radius: siteButton.frame.height / 2, shadows: false)
         roundCornersOf(ppButton, radius: ppButton.frame.height / 2, shadows: false)
         roundCornersOf(maButton, radius: maButton.frame.height / 2, shadows: false)
@@ -211,14 +235,13 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         
         roundCornersOf(gameOverView, radius: 10, shadows: true)
         
+        roundCornersOf(shareResultButton, radius: shareButton.frame.height / 2, shadows: false)
         roundCornersOf(againButton, radius: againButton.frame.height / 2, shadows: false)
         roundCornersOf(menuButton, radius: menuButton.frame.height / 2, shadows: false)
         
         blurEffectView.frame = view.frame
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.rotated), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
-        
+
         iconIndex = Int(arc4random_uniform(UInt32(emojiArray.count)))
         key = Array(emojiArray.keys)[iconIndex]
         dictValue = Array(emojiArray.values)[iconIndex]
@@ -253,6 +276,83 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         // Dispose of any resources that can be recreated.
     }
     
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        blurEffectView.frame = view.frame
+        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            self.instructsView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 40)
+            self.moreView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 40)
+            self.maView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 40)
+            self.aboutView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 40)
+            self.gameView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 40)
+            self.gameOverView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 40)
+            
+            if self.instructsText.contentSize.height < self.instructsText.frame.size.height {
+                self.instructsText.isScrollEnabled = false
+            } else {
+                self.instructsText.isScrollEnabled = true
+            }
+            if self.tcText.frame.size.height < self.tcText.contentSize.height {
+                self.tcText.frame.size.height = self.tcText.contentSize.height
+            }
+            if self.qtText.frame.size.height < self.qtText.contentSize.height {
+                self.qtText.frame.size.height = self.qtText.contentSize.height
+            }
+            if self.aboutText.contentSize.height < self.aboutText.frame.size.height {
+                self.aboutText.isScrollEnabled = false
+            } else {
+                self.aboutText.isScrollEnabled = true
+            }
+
+            self.imageFromLabel(self.emojiLabel)
+            self.emojiImageView.center = self.emojiLabel.center
+            self.emojiLabel.center = self.emojiImageView.center
+            
+            if UIDevice().userInterfaceIdiom == .phone {
+                switch UIScreen.main.nativeBounds.height {
+                case 2436:
+                    let screenSize = UIScreen.main.bounds.size
+                    if screenSize.width > screenSize.height { // landscape
+                        self.instructsView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 80, height: self.view.frame.height - 40)
+                        self.moreView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 80, height: self.view.frame.height - 40)
+                        self.maView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 80, height: self.view.frame.height - 40)
+                        self.aboutView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 80, height: self.view.frame.height - 40)
+                        self.gameView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 80, height: self.view.frame.height - 40)
+                        self.gameOverView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 80, height: self.view.frame.height - 40)
+                    } else { // portrait
+                        self.instructsView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 80)
+                        self.moreView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 80)
+                        self.maView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 80)
+                        self.aboutView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 80)
+                        self.gameView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 80)
+                        self.gameOverView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width - 40, height: self.view.frame.height - 80)
+                    }
+                default:
+                    break // every other iPhone than iPhone X
+                }
+            }
+            
+            self.roundCornersOf(self.instructsView, radius: 10, shadows: true)
+            self.roundCornersOf(self.moreView, radius: 10, shadows: true)
+            self.roundCornersOf(self.maView, radius: 10, shadows: false)
+            self.roundCornersOf(self.aboutView, radius: 10, shadows: false)
+            self.roundCornersOf(self.gameView, radius: 10, shadows: true)
+            self.roundCornersOf(self.gameOverView, radius: 10, shadows: true)
+            
+            self.instructsView.center = self.view.center
+            self.moreView.center = self.view.center
+            self.maView.center = self.view.center
+            self.aboutView.center = self.view.center
+            self.gameView.center = self.view.center
+            self.gameOverView.center = self.view.center
+        }
+    }
+    
+//    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+//
+//    }
+    
     // MARK: @IBAction functions
     
     @IBAction func addInstructsView(_ sender: Any) {
@@ -281,12 +381,20 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     }
     
     @IBAction func shareAction(_ sender: Any) {
-        let textToShare = ["Hello! I love GuessingEmoji and I think you should check it out!\n\nGuessingEmoji tests your knowledge of the little symbols you encounter but ignore every day.\n\nCheck it out now on the iOS App Store!"]
+        let textToShare = ["Hello! I love GuessingEmoji and I think you should check it out!\n\nGuessingEmoji tests your knowledge of the little symbols you encounter but ignore every day...\n\nDownload now! https://itunes.apple.com/us/app/guessingemoji/id1373719010?mt=8"]
         
         let activityVc = UIActivityViewController(activityItems: textToShare, applicationActivities: nil)
         activityVc.popoverPresentationController?.sourceView = view
         
+        activityVc.excludedActivityTypes = [UIActivityType("com.apple.mobilenotes.SharingExtension")]
+        
         present(activityVc, animated: true, completion: nil)
+    }
+    
+    @IBAction func rateAction(_ sender: Any) {
+        if !isLoadingApp {
+            presentApp("GuessingEmoji", appId: 1373719010)
+        }
     }
     
     @IBAction func showSite(_ sender: Any) {
@@ -300,16 +408,19 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     @IBAction func addMaView(_ sender: Any) {
         animateIn(maView)
         
-        qtButton.isUserInteractionEnabled = true
-        tcButton.isUserInteractionEnabled = true
+        resetAppButtons()
     }
     
     @IBAction func showQt(_ sender: Any) {
-        presentApp("QuickTap", appId: 1190851546)
+        if !isLoadingApp {
+            presentApp("QuickTap", appId: 1190851546)
+        }
     }
     
     @IBAction func showTc(_ sender: Any) {
-        presentApp("TempConv", appId: 1163432921)
+        if !isLoadingApp {
+            presentApp("TempConv", appId: 1163432921)
+        }
     }
     
     @IBAction func addAboutView(_ sender: Any) {
@@ -326,17 +437,37 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         animateOut(instructsView)
         animateOut(moreView)
         animateOut(gameOverView)
+        
+        resetAppButtons()
     }
     
     @IBAction func aGoBack(_ sender: Any) {
         animateOut(maView)
         animateOut(aboutView)
+        
+        resetAppButtons()
     }
     
     @IBAction func startGame(_ sender: Any) {
         easyButton.isUserInteractionEnabled = false
         mediumButton.isUserInteractionEnabled = false
         hardButton.isUserInteractionEnabled = false
+        
+        if (sender as! UIButton).titleLabel?.text != "Again!" {
+            modePlayed = ((sender as! UIButton).titleLabel?.text!)!
+        }
+        
+//        switch modePlayed {
+//        case "Easy":
+//            highscoreLabel.text = String(easyHighscore)
+//            print(easyHighscore)
+//        case "Medium":
+//            highscoreLabel.text = String(mediumHighscore)
+//        case "Hard":
+//            highscoreLabel.text = String(hardHighscore)
+//        default:
+//            break
+//        }
         
         fadeIn(blurEffectView)
         animateIn(gameView)
@@ -351,138 +482,29 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         startGame(sender as! UIButton)
     }
     
+    @IBAction func shareGameResult(_ sender: Any) {
+        var textToShare = ["Hello! I just played GuessingEmoji and achieved a score of \(score) playing \(modePlayed) mode!\n\nGuessingEmoji tests your knowledge of the little symbols you encounter but ignore every day...\n\nDownload now! https://itunes.apple.com/us/app/guessingemoji/id1373719010?mt=8"]
+
+        if score == 50 {
+            textToShare = ["Hello! I just played GuessingEmoji and achieved a score of \(score) playing \(modePlayed) mode! Getting 50 means that I diffused the emoji bomb and won the game!\n\nGuessingEmoji tests your knowledge of the little symbols you encounter but ignore every day...\n\nDownload now! https://itunes.apple.com/us/app/guessingemoji/id1373719010?mt=8"]
+        }
+        
+        let activityVc = UIActivityViewController(activityItems: textToShare, applicationActivities: nil)
+        activityVc.popoverPresentationController?.sourceView = view
+        
+        activityVc.excludedActivityTypes = [UIActivityType("com.apple.mobilenotes.SharingExtension")]
+        
+        present(activityVc, animated: true, completion: nil)
+    }
+    
     // MARK: Main functions
     
     @objc func changeVab() {
         vabButton.setTitle("Version & Build", for: .normal)
     }
-    
-    @objc func rotated() {
-        print(view.frame)
-        
-        if view.frame.height > view.frame.width {
-            scaleNumber = view.frame.height * 2 + 150
-        } else {
-            scaleNumber = view.frame.width * 2 + 150
-        }
-        
-        blurEffectView.frame = view.frame
-    
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            if isInitialLaunch {
-                isInitialLaunch = false
-            } else {
-                let screenSize = UIScreen.main.bounds.size
-                
-                if isInitalRotation {
-                    print("isInitalRotation")
-                    
-                    if screenSize.width > screenSize.height { // landscape
-                        print("ls")
-                        instructsView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        moreView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        maView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        aboutView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameOverView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                    } else { // portrait
-                        print("pt")
-                        instructsView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        moreView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        maView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        aboutView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameOverView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                    }
-                    
-                    isInitalRotation = false
-                } else {
-                    if screenSize.width > screenSize.height { // landscape
-                        print("ls")
-                        instructsView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        moreView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        maView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        aboutView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameOverView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                    } else { // portrait
-                        print("pt")
-                        instructsView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        moreView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        maView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        aboutView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                        gameOverView.frame = CGRect(x: 20, y: 20, width: view.frame.height - 40, height: view.frame.width - 40)
-                    }
-                }
-            }
-        } else {
-            instructsView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 40)
-            moreView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 40)
-            maView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 40)
-            aboutView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 40)
-            gameView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 40)
-            gameOverView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 40)
-            
-            if UIDevice().userInterfaceIdiom == .phone {
-                switch UIScreen.main.nativeBounds.height {
-                case 2436:
-                    let screenSize = UIScreen.main.bounds.size
-                    if screenSize.width > screenSize.height { // landscape
-                        instructsView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 80, height: view.frame.height - 40)
-                        moreView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 80, height: view.frame.height - 40)
-                        maView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 80, height: view.frame.height - 40)
-                        aboutView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 80, height: view.frame.height - 40)
-                        gameView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 80, height: view.frame.height - 40)
-                        gameOverView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 80, height: view.frame.height - 40)
-                    } else { // portrait
-                        instructsView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 80)
-                        moreView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 80)
-                        maView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 80)
-                        aboutView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 80)
-                        gameView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 80)
-                        gameOverView.frame = CGRect(x: 0, y: 0, width: view.frame.width - 40, height: view.frame.height - 80)
-                    }
-                default:
-                    break // every other iPhone than iPhone X
-                }
-            }
-            
-            instructsView.center = view.center
-            moreView.center = view.center
-            maView.center = view.center
-            aboutView.center = view.center
-            gameView.center = view.center
-            gameOverView.center = view.center
-        }
-        
-        if instructsText.contentSize.height < instructsText.frame.size.height {
-            instructsText.isScrollEnabled = false
-        } else {
-            instructsText.isScrollEnabled = true
-        }
-        if tcText.frame.size.height < tcText.contentSize.height {
-            tcText.frame.size.height = tcText.contentSize.height
-        }
-        if qtText.frame.size.height < qtText.contentSize.height {
-            qtText.frame.size.height = qtText.contentSize.height
-        }
-        if aboutText.contentSize.height < aboutText.frame.size.height {
-            aboutText.isScrollEnabled = false
-        } else {
-            aboutText.isScrollEnabled = true
-        }
-        
-        roundCornersOf(instructsView, radius: 10, shadows: true)
-        roundCornersOf(moreView, radius: 10, shadows: true)
-        roundCornersOf(maView, radius: 10, shadows: false)
-        roundCornersOf(aboutView, radius: 10, shadows: false)
-        roundCornersOf(gameView, radius: 10, shadows: true)
-        roundCornersOf(gameOverView, radius: 10, shadows: true)
-    }
-    
+
     func startGame(_ sender: UIButton) {
-        view.addSubview(gameView)
+        gameView.alpha = 1
         gameOverView.removeFromSuperview()
         
         startView.center.x = gameView.center.x - 20
@@ -505,8 +527,11 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             newQuestion(buttonTitle)
         }
         
+        scoreLabel.textColor = .black
+//        highscoreLabel.textColor = .black
+        
         score = 0
-        scoreLabel.text = "Score: \(score)"
+        scoreLabel.text = "\(score)"
         usedEmojis.removeAll()
     }
     
@@ -598,7 +623,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         }
         
         var tagNum = 1
-        
+
         for answer in finalAnswers {
             button = UIButton(frame: CGRect(x: 0, y: 0, width: 103.50, height: 30))
             button.addTarget(self, action: #selector(ViewController.checkAnswer(_:)), for: .touchUpInside)
@@ -612,7 +637,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             button.backgroundColor = UIColor(red: 234/255, green: 195/255, blue: 97/255, alpha: 1)
             button.setTitleColor(.black, for: .normal)
             
-            roundCornersOf(button, radius: 10, shadows: false)
+            roundCornersOf(button, radius: button.frame.height / 2, shadows: false)
             stackView.addArrangedSubview(button)
         }
     }
@@ -629,7 +654,33 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             })
             
             score += 1
-            scoreLabel.text = "Score: \(score)"
+            scoreLabel.text = "\(score)"
+            
+//            if modePlayed == "Easy" && score >= easyHighscore {
+//                defaults.set(score, forKey: "easyHighscore")
+//                defaults.synchronize()
+//
+//                scoreLabel.textColor = .green
+//                highscoreLabel.textColor = .green
+//
+//                highscoreLabel.text = scoreLabel.text
+//            } else if modePlayed == "Medium" && score >= mediumHighscore {
+//                defaults.set(score, forKey: "mediumHighscore")
+//                defaults.synchronize()
+//
+//                scoreLabel.textColor = .green
+//                highscoreLabel.textColor = .green
+//
+//                highscoreLabel.text = scoreLabel.text
+//            } else if modePlayed == "Hard" && score >= hardHighscore {
+//                defaults.set(score, forKey: "hardHighscore")
+//                defaults.synchronize()
+//
+//                scoreLabel.textColor = .green
+//                highscoreLabel.textColor = .green
+//
+//                highscoreLabel.text = scoreLabel.text
+//            }
             
             emojiLabel.alpha = 1
             
@@ -641,14 +692,14 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             label.textColor = .black
             label.text = key
             label.textAlignment = .center
-            roundCornersOf(label, radius: 10, shadows: false)
+            roundCornersOf(label, radius: label.frame.height / 2, shadows: false)
             label.clipsToBounds = true
             
             stackView.addArrangedSubview(label)
             
             emojiImageView.alpha = 0
             
-            if score != 50{
+            if score != 50 {
                 playSound("dingSFX", fileExtension: ".mp3")
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {
@@ -713,7 +764,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             button.backgroundColor = UIColor(red: 234/255, green: 195/255, blue: 97/255, alpha: 1)
             button.setTitleColor(.black, for: .normal)
             
-            roundCornersOf(button, radius: 10, shadows: false)
+            roundCornersOf(button, radius: button.frame.height / 2, shadows: false)
             stackView.addArrangedSubview(button)
         }
     }
@@ -721,21 +772,35 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     @objc func locationChecker(_ button: UIButton, forEvent event: UIEvent) {
         guard let touch = event.allTouches?.first else { return }
         
-        if button.tag == 1 {
+        if traitCollection.horizontalSizeClass == .regular {
+            if button.tag == 1 {
+                tapPoint.x = touch.location(in: button).x
+            } else if button.tag == 2 {
+                tapPoint.x = touch.location(in: button).x + button.frame.width
+            } else if button.tag == 3 {
+                tapPoint.x = touch.location(in: button).x + 2 * button.frame.width
+            } else if button.tag == 4 {
+                tapPoint.x = touch.location(in: button).x + 3 * button.frame.width
+            }
+            
+            tapPoint.y = touch.location(in: button).y
+        } else if traitCollection.horizontalSizeClass == .compact {
+            if button.tag == 1 {
+                tapPoint.y = touch.location(in: button).y
+            } else if button.tag == 2 {
+                tapPoint.y = touch.location(in: button).y + button.frame.height
+            } else if button.tag == 3 {
+                tapPoint.y = touch.location(in: button).y + 2 * button.frame.height
+            } else if button.tag == 4 {
+                tapPoint.y = touch.location(in: button).y + 3 * button.frame.height
+            }
+            
             tapPoint.x = touch.location(in: button).x
-        } else if button.tag == 2 {
-            tapPoint.x = touch.location(in: button).x + button.frame.width
-        } else if button.tag == 3 {
-            tapPoint.x = touch.location(in: button).x + 2 * button.frame.width
-        } else if button.tag == 4 {
-            tapPoint.x = touch.location(in: button).x + 3 * button.frame.width
         }
-        
-        tapPoint.y = touch.location(in: button).y
     }
     
     func handleGameOver(_ method: String) {
-        gameView.removeFromSuperview()
+        gameView.alpha = 0
         
         roundCornersOf(gameOverView, radius: 10, shadows: true)
         gameOverView.center = view.center
@@ -748,6 +813,15 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         })
         
         gameOverScoreLabel.text = scoreLabel.text
+//        gameOverHighscoreLabel.text = highscoreLabel.text
+//
+//        if gameOverScoreLabel.text == gameOverHighscoreLabel.text {
+//            gameOverScoreLabel.textColor = .green
+//            gameOverHighscoreLabel.textColor = .green
+//        } else {
+//            gameOverScoreLabel.textColor = .black
+//            gameOverHighscoreLabel.textColor = .black
+//        }
         
         switch method {
         case "incorrect":
@@ -755,7 +829,14 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             generator.prepare()
             generator.impactOccurred()
             playSound("explosionSFX", fileExtension: ".mp3")
-            gameOverLabel.text = "Game Over!"
+            
+//            if (modePlayed == "Easy" && score > easyHighscore) || (modePlayed == "Medium" && score > mediumHighscore) || (modePlayed == "Hard" && score > hardHighscore) {
+//                gameOverLabel.text = "New Highscore!"
+//            } else if (modePlayed == "Easy" && score == easyHighscore) || (modePlayed == "Medium" && score == mediumHighscore) || (modePlayed == "Hard" && score == hardHighscore) {
+//                gameOverLabel.text = "Equalled Highscore!"
+//            } else {
+                gameOverLabel.text = "Game Over!"
+//            }
             
             if key == "DVD" {
                 gameOverMessageLabel.text = "Incorrect. It was \(key) (\(dictValue))."
@@ -767,15 +848,29 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
             generator.prepare()
             generator.impactOccurred()
             playSound("explosionSFX", fileExtension: ".mp3")
-            gameOverLabel.text = "Game Over!"
-            
+//
+//            if (modePlayed == "Easy" && score > easyHighscore) || (modePlayed == "Medium" && score > mediumHighscore) || (modePlayed == "Hard" && score > hardHighscore) {
+//                gameOverLabel.text = "New Highscore!"
+//            } else if (modePlayed == "Easy" && score == easyHighscore) || (modePlayed == "Medium" && score == mediumHighscore) || (modePlayed == "Hard" && score == hardHighscore) {
+//                gameOverLabel.text = "Equalled Highscore!"
+//            } else {
+                gameOverLabel.text = "Game Over!"
+//            }
+        
             if key == "DVD" {
                 gameOverMessageLabel.text = "Timeout. It was \(key) (\(dictValue))."
             } else {
                 gameOverMessageLabel.text = "Timeout. It was \(key.lowercased()) (\(dictValue))."
             }
         case "complete":
-            gameOverLabel.text = "Diffused!"
+//            if (modePlayed == "Easy" && score > easyHighscore) || (modePlayed == "Medium" && score > mediumHighscore) || (modePlayed == "Hard" && score > hardHighscore) {
+//                gameOverLabel.text = "Diffused + New Highscore!"
+//            } else if (modePlayed == "Easy" && score == easyHighscore) || (modePlayed == "Medium" && score == mediumHighscore) || (modePlayed == "Hard" && score == hardHighscore) {
+//                gameOverLabel.text = "Diffused + Equalled Highscore!"
+//            } else {
+                gameOverLabel.text = "Diffused!"
+//            }
+
             gameOverMessageLabel.text = "You've completed the game!"
         default:
             break
@@ -783,7 +878,7 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     }
     
     func imageFromLabel(_ label: UILabel) {
-        curtain = UIView(frame: CGRect(x: gameView.center.x - 25, y: 125, width: 50, height: 50))
+        curtain = UIView(frame: CGRect(x: gameView.center.x - 25, y: 125, width: emojiLabel.frame.width, height: emojiLabel.frame.height))
         curtain.alpha = 1
         curtain.backgroundColor = .white
         curtain.center = emojiLabel.center
@@ -802,6 +897,9 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
 
         emojiImageView.image = emojiImage?.withRenderingMode(.alwaysTemplate)
         emojiImageView.alpha = 1
+        
+        emojiImageView.center = emojiLabel.center
+        emojiLabel.center = emojiImageView.center
     }
 
     func animateIn(_ view: UIView) {
@@ -903,14 +1001,24 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
     }
     
     func presentApp(_ app: String, appId: Int) {
+        isLoadingApp = true
+        
         if app == "QuickTap" {
             qtButton.setTitle("Loading...", for: .normal)
             
+            rateButton.isUserInteractionEnabled = false
+            qtButton.isUserInteractionEnabled = false
+            tcButton.isUserInteractionEnabled = false
+        } else if app == "TempConv" {
+            tcButton.setTitle("Loading...", for: .normal)
+            
+            rateButton.isUserInteractionEnabled = false
             qtButton.isUserInteractionEnabled = false
             tcButton.isUserInteractionEnabled = false
         } else {
-            tcButton.setTitle("Loading...", for: .normal)
+            rateButton.setTitle("Loading...", for: .normal)
             
+            rateButton.isUserInteractionEnabled = false
             qtButton.isUserInteractionEnabled = false
             tcButton.isUserInteractionEnabled = false
         }
@@ -920,52 +1028,65 @@ class ViewController: UIViewController, SKStoreProductViewControllerDelegate {
         
         let parameters = [SKStoreProductParameterITunesItemIdentifier: NSNumber(value: appId)]
         
-        
         storeVc.loadProduct(withParameters: parameters, completionBlock: { (result, error) in
+            self.isLoadingApp = false
+            
             if result {
                 self.present(storeVc, animated: true, completion: nil)
                 
                 if app == "QuickTap" {
                     self.qtButton.setTitle("QuickTap", for: .normal)
-                    self.qtButton.isUserInteractionEnabled = true
-                } else {
+                } else if app == "TempConv" {
                     self.tcButton.setTitle("TempConv", for: .normal)
-                    self.tcButton.isUserInteractionEnabled = true
+                } else {
+                    self.rateButton.setTitle("Rate & Review", for: .normal)
                 }
             } else {
                 if let unwrappedError = error {
-                    self.appErrorLoaded = app
                     if app == "QuickTap" {
-                        self.tcButton.isUserInteractionEnabled = false
                         self.qtButton.setTitle("\(unwrappedError.localizedDescription)", for: .normal)
-                        self.perform(#selector(ViewController.handleAppStoreError), with: nil, afterDelay: 5)
-                    } else {
-                        self.qtButton.isUserInteractionEnabled = false
+                        self.perform(#selector(ViewController.resetAppButtons), with: nil, afterDelay: 5)
+                    } else if app == "TempConv" {
                         self.tcButton.setTitle("\(unwrappedError.localizedDescription)", for: .normal)
-                        self.perform(#selector(ViewController.handleAppStoreError), with: nil, afterDelay: 5)
+                        self.perform(#selector(ViewController.resetAppButtons), with: nil, afterDelay: 5)
+                    } else {
+                        self.rateButton.setTitle("\(unwrappedError.localizedDescription)", for: .normal)
+                        self.perform(#selector(ViewController.resetAppButtons), with: nil, afterDelay: 5)
                     }
                 }
             }
         })
     }
     
-    @objc func handleAppStoreError() {
-        if appErrorLoaded == "QuickTap" {
-            self.tcButton.isUserInteractionEnabled = true
+    @objc func resetAppButtons() {
+        rateButton.isUserInteractionEnabled = true
+        qtButton.isUserInteractionEnabled = true
+        tcButton.isUserInteractionEnabled = true
+        
+        if rateButton.titleLabel?.text != "Rate & Review" || rateButton.titleLabel?.text != "Loading..." {
+            rateButton.setTitle("Rate & Review", for: .normal)
+        }
+        
+        if qtButton.titleLabel?.text != "QuickTap" || qtButton.titleLabel?.text != "Loading..." {
             qtButton.setTitle("QuickTap", for: .normal)
-        } else {
-            self.qtButton.isUserInteractionEnabled = true
+        }
+        
+        if tcButton.titleLabel?.text != "TempConv" || tcButton.titleLabel?.text != "Loading..." {
             tcButton.setTitle("TempConv", for: .normal)
         }
+        
+        NSObject.cancelPreviousPerformRequests(withTarget: self)
     }
     
     func productViewControllerDidFinish(_ viewController: SKStoreProductViewController) {
+        rateButton.isUserInteractionEnabled = true
         qtButton.isUserInteractionEnabled = true
         tcButton.isUserInteractionEnabled = true
+        
         viewController.dismiss(animated: true, completion: nil)
     }
     
-    // MARK: Array of emojis
+    // MARK: Arrays of emojis
     
     let emojiArray = [
         "Letter": "✉",
